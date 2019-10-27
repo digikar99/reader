@@ -4,6 +4,7 @@
    :-
    :--
    :---
+   :args
    :cl-reader
    :get-val))
 
@@ -32,16 +33,37 @@
 
 (defun read-stream-until (stream until-char)
   (iter (for next-char = (peek-char t stream nil))
-        (while next-char)
+        (unless next-char (next-iteration))
         (until (char= until-char next-char))
         (collect (read stream nil))
         (finally (read-char stream nil))))
 
+(defun guess-num-args (body)
+  (let* ((symbols (alexandria:flatten body))
+         (arg-symbols (intersection symbols '(- -- ---))))
+    (cond ((member '--- arg-symbols) 3)
+          ((member '-- arg-symbols) 2)
+          ((member '- arg-symbols) 1)
+          (t 0))))
+
 (defun lambda-reader-macro (stream char) 
   (declare (ignore char))
-  `(lambda (&optional - -- ---)
-     (declare (ignorable - -- ---))
-     ,(read stream)))
+  (let* ((may-be-body (read stream))
+         (num-args-p (if (typep may-be-body '(integer 1))
+                        may-be-body
+                        nil))
+         (num-args (if (typep may-be-body '(integer 1))
+                       may-be-body
+                       (guess-num-args may-be-body)))
+         (body (if num-args-p (read stream) may-be-body)))
+    `(lambda ,@(ecase num-args
+                 (1 `((&optional - &rest args)
+                      (declare (ignorable - args))))
+                 (2 `((&optional - -- &rest args)
+                      (declare (ignorable - -- args))))
+                 (3 `((&optional - -- --- &rest args)
+                      (declare (ignorable - -- --- args)))))
+       ,body)))
 
 (defun mapcar-reader-macro (stream char n)
   (declare (ignore char n))
