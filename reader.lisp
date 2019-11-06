@@ -5,13 +5,13 @@
    :--
    :---
    :args
-   :cl-reader
+   :reader
    :get-val))
 
 (in-package :reader)
 
 
-(named-readtables:defreadtable cl-reader
+(named-readtables:defreadtable reader
   (:merge :standard)
   (:macro-char #\GREEK_SMALL_LETTER_LAMDA 'lambda-reader-macro)
   (:macro-char #\[ 'get-val-reader-macro)
@@ -57,6 +57,8 @@
                        (guess-num-args may-be-body)))
          (body (if num-args-p (read stream) may-be-body)))
     `(lambda ,@(ecase num-args
+                 (0 `((&optional &rest args)
+                      (declare (ignorable args))))
                  (1 `((&optional - &rest args)
                       (declare (ignorable - args))))
                  (2 `((&optional - -- &rest args)
@@ -73,15 +75,25 @@
                    (collect (read stream))
                    (finally (read-char stream nil)))))
 
-(defmacro defmethods (fun-name lambda-list &rest methods)
-  `(defgeneric ,fun-name ,lambda-list
-     ,@(loop for args = (first methods)
-          for body = (second methods)
-          do (setq methods (cddr methods))
-          while methods
-          collect `(:method ,args ,body))))
+(defmacro defmethods-with-setf (fun-name lambda-list &rest methods)
+  `(progn
+     ,@(let ((new-value (gensym)))
+         `(,(let ((methods methods))
+              `(defgeneric ,fun-name ,lambda-list
+                 ,@(loop for args = (first methods)
+                      for body = (second methods)
+                      do (setq methods (cddr methods))
+                      while methods
+                      collect `(:method ,args ,body))))
+            ,@(let ((methods methods))
+                (loop for args = (first methods)
+                   for body = (second methods)
+                   do (setq methods (cddr methods))
+                   while methods
+                   collect `(defmethod (setf ,fun-name) (,new-value ,@args)
+                              (setf ,body ,new-value))))))))
 
-(defmethods get-val (object key)
+(defmethods-with-setf get-val (object key)
   ((object vector) key) (aref object key)
   ((object array) key) (apply #'aref object key)
   ((object hash-table) key) (gethash key object)
@@ -89,6 +101,9 @@
   ((object sequence) key) (elt object key)
   ((object structure-object) key) (slot-value object key)
   ((object standard-object) key) (slot-value object key))
+
+(defmethod (setf get-val) (new-value (object list) key)
+  (list new-value object key))
 
 (defun get-val-reader-macro (stream char)
   (declare (ignore char))
