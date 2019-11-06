@@ -88,10 +88,10 @@
             ,@(let ((methods methods))
                 (loop for args = (first methods)
                    for body = (second methods)
-                   do (setq methods (cddr methods))
                    while methods
                    collect `(defmethod (setf ,fun-name) (,new-value ,@args)
-                              (setf ,body ,new-value))))))))
+                              (setf ,body ,new-value))
+                   do (setq methods (cddr methods))))))))
 
 (defmethods-with-setf get-val (object key)
   ((object vector) key) (aref object key)
@@ -101,9 +101,6 @@
   ((object sequence) key) (elt object key)
   ((object structure-object) key) (slot-value object key)
   ((object standard-object) key) (slot-value object key))
-
-(defmethod (setf get-val) (new-value (object list) key)
-  (list new-value object key))
 
 (defun get-val-reader-macro (stream char)
   (declare (ignore char))
