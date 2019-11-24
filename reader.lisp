@@ -49,10 +49,10 @@
 (defun lambda-reader-macro (stream char) 
   (declare (ignore char))
   (let* ((may-be-body (read stream))
-         (num-args-p (if (typep may-be-body '(integer 1))
+         (num-args-p (if (typep may-be-body '(integer 0 3))
                         may-be-body
                         nil))
-         (num-args (if (typep may-be-body '(integer 1))
+         (num-args (if (typep may-be-body '(integer 0 3))
                        may-be-body
                        (guess-num-args may-be-body)))
          (body (if num-args-p (read stream) may-be-body)))
@@ -97,10 +97,27 @@
   ((object vector) key) (aref object key)
   ((object array) key) (apply #'aref object key)
   ((object hash-table) key) (gethash key object)
-  ((object list) key) (nth key object)
   ((object sequence) key) (elt object key)
   ((object structure-object) key) (slot-value object key)
   ((object standard-object) key) (slot-value object key))
+
+;;; An attempt may be made using specializing on trivial-types:association-list
+;;; However, an error that this is not a class is raised.
+;;; Further, we also need to allow the use of ['(a b c d) 3] => d rather
+;;; than nil.
+
+(defmethod get-val ((object list) key)
+  (cond ((trivial-types:association-list-p object)
+         (let ((pair (assoc key object :test 'equal)))
+           (if pair (cdr pair) nil)))
+        ((and (trivial-types:property-list-p object)
+              (not (integerp key)))
+         (getf object key))
+        (t (nth key object))))
+
+(defmethod (setf get-val) (new-value (object list) key)
+  (setf (nth key object) new-value))
+
 
 (defun get-val-reader-macro (stream char)
   (declare (ignore char))

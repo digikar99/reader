@@ -20,17 +20,19 @@
 
 (defmacro with-env (&body body)
   `(let ((str (copy-array "abcde"))
-        (vec (copy-array #(a b c d e)))
-        (list (copy-list '(a b c d e)))
-        (ht {'a 'b 'c 'd})
-        (arr (copy-array #2A((1 2) (3 4))))
-        (clos-object (make-instance 'foo))
-        (struct (make-bar :a 3))
-        (list-chained (copy-list (list 1 2 `#(a b ,(copy-array
-                                                    #2A((q w e)(r t y)))))))
-        (list-str (copy-list '("hello" "world")))
-        (list-ht (list {"uniform" "utilities"})))
-    ,@body))
+         (vec (copy-array #(a b c d e)))
+         (list (copy-list '(a b c d e)))
+         (ht {'a 'b 'c 'd})
+         (arr (copy-array #2A((1 2) (3 4))))
+         (assoc-list (copy-tree '((a . 1) (b . 2))))
+         (plist (copy-list '(:a 4 :c 5)))
+         (clos-object (make-instance 'foo))
+         (struct (make-bar :a 3))
+         (list-chained (copy-list (list 1 2 `#(a b ,(copy-array
+                                                     #2A((q w e)(r t y)))))))
+         (list-str (copy-list '("hello" "world")))
+         (list-ht (list {"uniform" "utilities"})))
+     ,@body))
 
 (deftest get-val
   (with-env
@@ -39,6 +41,10 @@
     (is [list 3] 'd)
     (is [ht 'a] 'b)
     (is [arr '(1 1)] 4)
+    (is [assoc-list 'a] 1)
+    (is [assoc-list 'c] nil)
+    (is [plist :c] 5)
+    (is [plist :e] nil)
     (is [clos-object 'a] 3)
     (is [struct 'a] 3)))
 
@@ -59,7 +65,7 @@
         'f)
     (is (progn (setf [arr '(0 1)] '(2))
                [arr '(0 1)])
-        '(2))
+        '(2)) ;; note: this is non-destructive!
     (is (progn (setf [clos-object 'a] 5)
                [clos-object 'a])
         5)

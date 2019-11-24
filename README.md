@@ -1,7 +1,7 @@
 # Examples
 
 ```lisp
-(named-readtables:in-readtables reader:cl-reader)
+(named-readtables:in-readtables reader:reader)
 ```
 
 ```lisp
@@ -19,8 +19,24 @@ CL-USER> [#2A((1 2 3) (4 5 6)) '(1 0)]          ; accessors
 CL-USER> [{"a" 1 "b" 2} "a"]                    ; accessors
 1
 T
+CL-USER> [(cl-json:decode-json-from-string "{\"a\":1, \"b\":2}") :b] ; works with alists
+2
 CL-USER> [{"a" "apple" "b" "ball"} "b" 1]       ; accessors can be chained
 #\a
+```
+
+See [reader-test.lisp](reader-test.lisp) for more examples.
+
+## Notes
+
+- `(setf [] ...)` does not work with alists and plists. Modifying alists and plists destructively would likely require compiler macros.
+- `λ` can take up to 3 arguments, and the remaining are captured by `&rest args`. Further, an optional integer (from 0 to 3 both inclusive) can be put in front of `λ` to indicate the number of arguments before `&rest args`: `(λ2(identity args) 1 2 3 4) => (3 4)` vs `(λ(identity args) 1 2 3 4) => (1 2 3 4)`
+
+## Testing
+
+```lisp
+(ql:quickload :reader-test)
+(prove:run-test-package :reader-test)
 ```
 
 # Modifications for emacs

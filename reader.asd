@@ -7,7 +7,8 @@
                "named-readtables"
                "arrow-macros"
                "hash-set"
-               "alexandria")
+               "alexandria"
+               "trivial-types")
   :components ((:file "reader")))
 
 
