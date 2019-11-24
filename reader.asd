@@ -5,11 +5,11 @@
   :description "A utility library intended at providing reader macros for lambdas, mapping, accessors, hash-tables and hash-sets."
   :depends-on ("iterate"
                "named-readtables"
-               "arrow-macros"
                "hash-set"
                "alexandria"
                "trivial-types"
-               "numcl")
+               "numcl"
+               "generic-cl")
   :components ((:file "reader")))
 
 

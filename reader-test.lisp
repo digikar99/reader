@@ -90,9 +90,12 @@
       20)
   (is (λ3(null args) 1 2 3) t))
 
-(deftest mapcar-reader-macro
+(deftest map-reader-macro
   (is #[λ(write-to-string -) '(2 5 a)]
-      '("2" "5" "A")))
+      '("2" "5" "A"))
+  (is #[λ(+ - --) #(1 2 3) #(2 3 4)]
+      #(3 5 7)
+      :test 'equalp))
 
 (deftest hash-set-reader-macro
   (let ((hash-set #{'a 'b 1}))

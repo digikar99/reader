@@ -22,7 +22,7 @@
   (:macro-char #\} (lambda (stream char)
                      (declare (ignore stream char))
                      (error "No matching { for }")))
-  (:dispatch-macro-char #\# #\[ 'mapcar-reader-macro)
+  (:dispatch-macro-char #\# #\[ 'map-reader-macro)
   (:dispatch-macro-char #\# #\] (lambda (stream char)
                                   (declare (ignore stream char))
                                   (error "No matching [ for ]")))
@@ -67,13 +67,10 @@
                       (declare (ignorable - -- --- args)))))
        ,body)))
 
-(defun mapcar-reader-macro (stream char n)
+(defun map-reader-macro (stream char n)
   (declare (ignore char n))
-  `(mapcar ,@(iter (for next-char = (peek-char t stream nil))
-                   (while next-char)
-                   (until (char= #\] next-char))
-                   (collect (read stream))
-                   (finally (read-char stream nil)))))
+  (let ((args (read-stream-until stream #\])))
+    `(generic-cl:map ,@args)))
 
 (defmacro defmethods-with-setf (fun-name lambda-list &rest methods)
   `(progn
@@ -132,9 +129,6 @@
 
 (defmethod (setf get-val) (new-value (object simple-array) &rest key/s)
   (setf (apply #'aref object key/s) new-value))
-
-
-
 
 (defun get-val-reader-macro (stream char)
   (declare (ignore char))
