@@ -84,7 +84,9 @@
                       for body = (second methods)
                       do (setq methods (cddr methods))
                       while methods
-                      collect `(:method ,args ,body))))
+                      collect `(:method ,args
+                                 (assert (= 1 (length key/s)))
+                                 ,body))))
             ,@(let ((methods methods))
                 (loop for args = (first methods)
                    for body = (second methods)
@@ -93,39 +95,50 @@
                               (setf ,body ,new-value))
                    do (setq methods (cddr methods))))))))
 
-(defmethods-with-setf get-val (object key)
-  ((object vector) key) (aref object key)
-  ((object array) key) (apply #'aref object key)
-  ((object hash-table) key) (gethash key object)
-  ((object sequence) key) (elt object key)
-  ((object structure-object) key) (slot-value object key)
-  ((object standard-object) key) (slot-value object key))
+(defmethods-with-setf get-val (object &rest key/s)
+  ((object hash-table) &rest key/s) (gethash (car key/s) object)
+  ((object sequence) &rest key/s) (elt object (car key/s))
+  ((object structure-object) &rest key/s) (slot-value object (car key/s))
+  ((object standard-object) &rest key/s) (slot-value object (car key/s)))
 
 ;;; An attempt may be made using specializing on trivial-types:association-list
 ;;; However, an error that this is not a class is raised.
 ;;; Further, we also need to allow the use of ['(a b c d) 3] => d rather
 ;;; than nil.
 
-(defmethod get-val ((object list) key)
-  (cond ((trivial-types:association-list-p object)
-         (let ((pair (assoc key object :test 'equal)))
-           (if pair (cdr pair) nil)))
-        ((and (trivial-types:property-list-p object)
-              (not (integerp key)))
-         (getf object key))
-        (t (nth key object))))
+(defmethod get-val ((object list) &rest key/s)
+  (assert (= 1 (length key/s)))
+  (let ((key (car key/s)))
+    (cond ((trivial-types:association-list-p object)
+           (let ((pair (assoc key object :test 'equal)))
+             (if pair (cdr pair) nil)))
+          ((and (trivial-types:property-list-p object)
+                (not (integerp key)))
+           (getf object key))
+          (t (nth key object)))))
 
-(defmethod (setf get-val) (new-value (object list) key)
-  (setf (nth key object) new-value))
+(defmethod (setf get-val) (new-value (object list) &rest key/s)
+  (assert (= 1 (length key/s)))
+  (setf (nth (car key/s) object) new-value))
+
+(defmethod get-val ((object array) &rest key/s)
+  (apply #'numcl:aref object key/s))
+
+(defmethod (setf get-val) (new-value (object array) &rest key/s)
+  (setf (apply #'numcl:aref object key/s) new-value))
+
+(defmethod get-val ((object simple-array) &rest key/s)
+  (apply #'aref object key/s))
+
+(defmethod (setf get-val) (new-value (object simple-array) &rest key/s)
+  (setf (apply #'aref object key/s) new-value))
+
+
 
 
 (defun get-val-reader-macro (stream char)
   (declare (ignore char))
-  `(-> (get-val ,(read stream) ,(read stream))
-     ,@(iter (until (char= (peek-char t stream nil)
-                           #\]))
-             (collect `(get-val ,(read stream)))
-             (finally (read-char stream nil)))))
+  `(get-val ,@(read-stream-until stream #\])))
 
 (defun hash-table-reader-macro (stream char)
   (declare (ignore char))

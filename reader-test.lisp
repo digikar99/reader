@@ -10,9 +10,9 @@
 
 (eval-when (:compile-toplevel :execute :load-toplevel)
   (defclass foo () ((a :initform 3)))
-  (defmethod get-val ((object foo) slot) (slot-value object slot))
-  (defmethod (setf get-val) (new-value (object foo) slot)
-    (setf (slot-value object slot) new-value))
+  (defmethod get-val ((object foo) &rest slot/s) (slot-value object (car slot/s)))
+  (defmethod (setf get-val) (new-value (object foo) &rest slot/s)
+    (setf (slot-value object (car slot/s)) new-value))
   (defstruct bar a))
 
 
@@ -23,15 +23,10 @@
          (vec (copy-array #(a b c d e)))
          (list (copy-list '(a b c d e)))
          (ht {'a 'b 'c 'd})
-         (arr (copy-array #2A((1 2) (3 4))))
          (assoc-list (copy-tree '((a . 1) (b . 2))))
          (plist (copy-list '(:a 4 :c 5)))
          (clos-object (make-instance 'foo))
-         (struct (make-bar :a 3))
-         (list-chained (copy-list (list 1 2 `#(a b ,(copy-array
-                                                     #2A((q w e)(r t y)))))))
-         (list-str (copy-list '("hello" "world")))
-         (list-ht (list {"uniform" "utilities"})))
+         (struct (make-bar :a 3)))
      ,@body))
 
 (deftest get-val
@@ -40,7 +35,6 @@
     (is [vec 0] 'a)
     (is [list 3] 'd)
     (is [ht 'a] 'b)
-    (is [arr '(1 1)] 4)
     (is [assoc-list 'a] 1)
     (is [assoc-list 'c] nil)
     (is [plist :c] 5)
@@ -63,9 +57,6 @@
     (is (progn (setf [ht 'a] 'f)
                [ht 'a])
         'f)
-    (is (progn (setf [arr '(0 1)] '(2))
-               [arr '(0 1)])
-        '(2)) ;; note: this is non-destructive!
     (is (progn (setf [clos-object 'a] 5)
                [clos-object 'a])
         5)
@@ -73,19 +64,23 @@
                [struct 'a])
         7)))
 
-(with-env
-    (deftest get-val-chained
-      (is [list-chained 2 2 '(1 1)] 't)
-      (is [list-str 1 3] #\l)
-      (is [list-ht 0 "uniform"] "utilities" :test #'string=)))
+(deftest get-val-numcl
+  (let* ((array #2A((1 2 3) (4 5 6)))
+         (num-array (numcl:asarray array)))
+    (is [array 0 0] 1)
+    (is [num-array t 0]
+        #(1 4)
+        :test 'equalp)))
 
-(with-env
-    (deftest setf-get-val-chained
-      (is (progn (setf [list-chained 2 2 '(1 1)]
-                       list-ht)
-                 [list-chained 2 2 '(1 1) 0 "uniform"])
-          "utilities"
-          :test #'string=)))
+(deftest setf-get-val-numcl
+  (let* ((array #2A((1 2 3) (4 5 6)))
+         (num-array (numcl:asarray array)))
+    (setf [array 0 0] 0)
+    (is [array 0 0] 0)
+    (setf [num-array t 0] (numcl:zeros 2))
+    (is [num-array t 0]
+        #(0 0)
+        :test 'equalp)))
 
 (deftest lambda-reader-macro
   (is-type λ() 'function)

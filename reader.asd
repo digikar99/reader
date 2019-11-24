@@ -8,7 +8,8 @@
                "arrow-macros"
                "hash-set"
                "alexandria"
-               "trivial-types")
+               "trivial-types"
+               "numcl")
   :components ((:file "reader")))
 
 

@@ -14,13 +14,16 @@ CL-USER> (gethash 'a {'a 1 'b 2})               ; hash-tables
 T
 CL-USER> (hash-set:hs-memberp #{"a" "b" "c"} "c") ; hash-set
 T
-CL-USER> [#2A((1 2 3) (4 5 6)) '(1 0)]          ; accessors
+CL-USER> [#2A((1 2 3) (4 5 6)) 1 0]             ; accessors
 4
+CL-USER> (let ((arr (numcl:asarray #2A((1 2 3) (4 5 6)))))
+           [arr t 0])
+#(1 4)                  ; simple-arrays use aref and arrays use numcl:aref
 CL-USER> [{"a" 1 "b" 2} "a"]                    ; accessors
 1
 T
-CL-USER> [(cl-json:decode-json-from-string "{\"a\":1, \"b\":2}") :b] ; works with alists
-2
+CL-USER> [(cl-json:decode-json-from-string "{\"a\":1, \"b\":2}") :b]
+2                                               ; works with alists
 CL-USER> [{"a" "apple" "b" "ball"} "b" 1]       ; accessors can be chained
 #\a
 ```
