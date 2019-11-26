@@ -136,12 +136,21 @@
 
 (defun hash-table-reader-macro (stream char)
   (declare (ignore char))
-  (let ((inputs (read-stream-until stream #\})))
+  (let* ((inputs (read-stream-until stream #\}))
+         (test (case (first inputs)
+                 (:eq 'eq)
+                 (:eql 'eql)
+                 (:equalp 'equalp)
+                 (t 'equal)))
+         (first-is-test (member (first inputs) '(:eq :eql :equalp :equal)))
+         (inputs (if first-is-test
+                     (cdr inputs)
+                     inputs)))
     (unless (evenp (length inputs))
       (error (format nil
                      "Constructing a hash table requires even number of elements: ~d"
                      inputs)))
-    `(alexandria:plist-hash-table (list ,@inputs) :test 'equal)))
+    `(alexandria:plist-hash-table (list ,@inputs) :test ',test)))
 
 (defun hash-set-reader-macro (stream char n)
   (declare (ignore char n))

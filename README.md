@@ -7,9 +7,9 @@
 ```lisp
 CL-USER> (mapcar λ(write-to-string -) '(2 3 4)) ; lambdas
 ("2" "3" "4")
-CL-USER> #[λ(+ - --) '(2 3 4) '(4 5 6)]         ; mapcar
+CL-USER> #[λ(+ - --) '(2 3 4) '(4 5 6)]         ; generic-cl:map (lists or vectors)
 (6 8 10)
-CL-USER> (gethash 'a {'a 1 'b 2})               ; hash-tables
+CL-USER> (gethash 'a {:eq 'a 1 'b 2})           ; hash-tables
 1
 T
 CL-USER> (hash-set:hs-memberp #{"a" "b" "c"} "c") ; hash-set
@@ -32,6 +32,7 @@ See [reader-test.lisp](reader-test.lisp) for more examples.
 
 ## Notes
 
+- `{"a" 1 "b" 2}` - hash tables use `'equal` as the default test. The intended test function (one of `(:eq :eql :equalp :equal)` can be specified as the first element of the literal syntax; conversely, these cannot be used as the first keys of the hash table. Besides providing with a choice, this also gets the indentation correct (see [Modification for emacs](#modifications-for-emacs).
 - `(setf [] ...)` does not work with alists and plists. Modifying alists and plists destructively would likely require compiler macros.
 - `λ` can take up to 3 arguments, and the remaining are captured by `&rest args`. Further, an optional integer (from 0 to 3 both inclusive) can be put in front of `λ` to indicate the number of arguments before `&rest args`: `(λ2(identity args) 1 2 3 4) => (3 4)` vs `(λ(identity args) 1 2 3 4) => (1 2 3 4)`
 
@@ -63,6 +64,23 @@ See [reader-test.lisp](reader-test.lisp) for more examples.
 ```
 
 Motivation: [paredit curly brace matching in swank-clojure repl - Stack OverFlow](https://stackoverflow.com/questions/8598116/paredit-curly-brace-matching-in-swank-clojure-repl)
+
+## Known Issues
+
+Known issues include aligning hash-tables without first-element-as-key:
+
+```lisp
+{"hello" 1
+         "world" 2}
+```
+
+A work-around is to specify the test as the first element, and let that default exist for one-liners:
+
+```lisp
+{:equal "hello" 1
+        "world" 2}
+{"hello" 1 "world" 2}
+```
 
 # Comments
 

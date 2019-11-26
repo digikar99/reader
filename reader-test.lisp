@@ -23,6 +23,10 @@
          (vec (copy-array #(a b c d e)))
          (list (copy-list '(a b c d e)))
          (ht {'a 'b 'c 'd})
+         (ht-eq {:eq "a" 1
+                     "b" 2})
+         (ht-equalp {:equalp '(1 2 3) "a"
+                             '(4 5 6) "b"})
          (assoc-list (copy-tree '((a . 1) (b . 2))))
          (plist (copy-list '(:a 4 :c 5)))
          (clos-object (make-instance 'foo))
@@ -35,6 +39,8 @@
     (is [vec 0] 'a)
     (is [list 3] 'd)
     (is [ht 'a] 'b)
+    (is [ht-eq (string (copy-array "a"))] nil)
+    (is [ht-equalp (copy-list '(4 5 6))] "b" :test 'equal)
     (is [assoc-list 'a] 1)
     (is [assoc-list 'c] nil)
     (is [plist :c] 5)
