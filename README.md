@@ -2,7 +2,14 @@
 
 ```lisp
 (named-readtables:in-readtables reader:reader)
+;;  OR 
+(reader:enable-reader-syntax &rest reader-macro-identifiers) ; check (describe)
+;; another way, until SLIME allows changing readtables more than twice
+;; (disable-reader-syntax) ; is complementary
 ```
+
+
+
 
 ```lisp
 CL-USER> (mapcar λ(write-to-string -) '(2 3 4)) ; lambdas

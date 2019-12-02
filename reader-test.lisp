@@ -16,7 +16,7 @@
   (defstruct bar a))
 
 
-(named-readtables:in-readtable reader:reader)
+(enable-reader-syntax 'get-val 'hash-table)
 
 (defmacro with-env (&body body)
   `(let ((str (copy-array "abcde"))
@@ -88,6 +88,9 @@
         #(0 0)
         :test 'equalp)))
 
+(disable-reader-syntax)
+(enable-reader-syntax 'lambda 'map 'hash-set)
+
 (deftest lambda-reader-macro
   (is-type λ() 'function)
   (is (λ(+ - --) 2 3) 5)
@@ -111,4 +114,4 @@
     (is-type (hash-set:hs-memberp hash-set 1) t)
     (is-type (hash-set:hs-memberp hash-set 2) 'null)))
 
-
+(disable-reader-syntax)

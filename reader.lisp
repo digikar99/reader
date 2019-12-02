@@ -6,10 +6,63 @@
    :---
    :args
    :reader
-   :get-val))
+   :get-val
+   :enable-reader-syntax
+   :disable-reader-syntax))
 
 (in-package :reader)
 
+(defvar *previous-readtables* nil)
+
+(defun %enable-reader-syntax (&rest reader-macro-identifiers)
+  "READER-MACRO-IDENTIFIERS are any of the following symbols:
+  LAMBDA, GET-VAL, HASH-TABLE, MAP, HASH-SET"
+  (let ((reader-macro-identifier-strings (mapcar #'symbol-name
+                                                 reader-macro-identifiers))
+        (reader-macro-activation-functions
+         (list (cons "LAMBDA" (lambda ()
+                                (set-macro-character #\GREEK_SMALL_LETTER_LAMDA
+                                                     'lambda-reader-macro)))
+               (cons "GET-VAL" (lambda ()
+                                   (set-macro-character #\[ 'get-val-reader-macro)
+                                   (set-macro-character #\] (lambda (stream char)
+                                                              (declare (ignore stream char))
+                                                              (error "No matching [ for ]")))))
+               (cons "HASH-TABLE"  (lambda ()
+                             (set-macro-character #\{ 'hash-table-reader-macro)
+                             (set-macro-character #\} (lambda (stream char)
+                                                        (declare (ignore stream char))
+                                                        (error "No matching { for }")))))
+               (cons "MAP" (lambda ()
+                             (set-dispatch-macro-character #\# #\[ 'map-reader-macro)
+                             (set-macro-character #\] (lambda (stream char)
+                                                        (declare (ignore stream char))
+                                                        (error "No matching [ for ]")))))
+               (cons "HASH-SET" (lambda ()
+                                  (set-dispatch-macro-character #\# #\{ 'hash-set-reader-macro)
+                                  (set-macro-character #\} (lambda (stream char)
+                                                             (declare (ignore stream char))
+                                                             (error "No matching { for }"))))))))
+    (push *readtable* *previous-readtables*)
+    (mapcar (lambda (reader-macro-identifier)
+              (funcall (cdr (assoc reader-macro-identifier
+                                   reader-macro-activation-functions
+                                   :test #'string=))))
+            reader-macro-identifier-strings)))
+
+(defmacro enable-reader-syntax (&rest reader-macro-identifiers)  
+  "READER-MACRO-IDENTIFIERS are any of the following symbols:
+  LAMBDA, GET-VAL, HASH-TABLE, MAP, HASH-SET"
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     (%enable-reader-syntax ,@reader-macro-identifiers)))
+
+(defun %disable-reader-syntax ()
+  (when *previous-readtables*
+    (setq *readtable* (pop *previous-readtables*))))
+
+(defmacro disable-reader-syntax ()
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     (%disable-reader-syntax)))
 
 (named-readtables:defreadtable reader
   (:merge :standard)
