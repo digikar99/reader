@@ -1,5 +1,5 @@
 (defpackage :reader
-  (:use :named-readtables :cl :iterate :arrow-macros :hash-set)
+  (:use :named-readtables :cl :iterate :hash-set)
   (:export
    :-
    :--
