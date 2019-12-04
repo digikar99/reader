@@ -44,6 +44,7 @@
                                                              (declare (ignore stream char))
                                                              (error "No matching { for }"))))))))
     (push *readtable* *previous-readtables*)
+    (setq *readtable* (copy-readtable))
     (mapcar (lambda (reader-macro-identifier)
               (funcall (cdr (assoc reader-macro-identifier
                                    reader-macro-activation-functions
@@ -57,8 +58,9 @@
      (%enable-reader-syntax ,@reader-macro-identifiers)))
 
 (defun %disable-reader-syntax ()
-  (when *previous-readtables*
-    (setq *readtable* (pop *previous-readtables*))))
+  (setq *readtable* (if *previous-readtables*
+                        (pop *previous-readtables*)
+                        (copy-readtable nil))))
 
 (defmacro disable-reader-syntax ()
   `(eval-when (:compile-toplevel :load-toplevel :execute)
