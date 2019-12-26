@@ -96,3 +96,6 @@ in rutils and clojure. However, emacs seems to treat `^` specially and something
 `(member ?\^ '(?\^))` gives an "End of file during parsing" error. This is an issue with
 the modification marked `; for inserting lambda`. Regarding `-` instead of `%1`: the former
 is easier to type than the latter. The `λ()` can take up to 3 (optional) arguments `- -- ---`.
+
+- [`cl-interpol`](http://edicl.github.io/cl-interpol/) is a prominent library providing perl / shell-like string interpolation facilities.
+- [`cl-json`](https://common-lisp.net/project/cl-json/cl-json.html) can be used for parsing JSON.
