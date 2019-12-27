@@ -1,11 +1,7 @@
 (defpackage :reader
   (:use :named-readtables :cl :iterate :hash-set)
   (:export
-   :-
-   :--
-   :---
    :args
-   :reader
    :get-val
    :enable-reader-syntax
    :disable-reader-syntax))
