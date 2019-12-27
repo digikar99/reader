@@ -24,25 +24,28 @@
                                 (set-macro-character #\GREEK_SMALL_LETTER_LAMDA
                                                      'lambda-reader-macro)))
                (cons "GET-VAL" (lambda ()
-                                   (set-macro-character #\[ 'get-val-reader-macro)
-                                   (set-macro-character #\] (lambda (stream char)
-                                                              (declare (ignore stream char))
-                                                              (error "No matching [ for ]")))))
+                                 (set-macro-character #\[ 'get-val-reader-macro)
+                                 (set-macro-character #\] (lambda (stream char)
+                                                            (declare (ignore stream char))
+                                                            (error "No matching [ for ]")))))
                (cons "HASH-TABLE"  (lambda ()
-                             (set-macro-character #\{ 'hash-table-reader-macro)
-                             (set-macro-character #\} (lambda (stream char)
-                                                        (declare (ignore stream char))
-                                                        (error "No matching { for }")))))
+                                     (set-macro-character #\{ 'hash-table-reader-macro)
+                                     (set-macro-character #\}
+                                                          (lambda (stream char)
+                                                            (declare (ignore stream char))
+                                                            (error "No matching { for }")))))
                (cons "MAP" (lambda ()
                              (set-dispatch-macro-character #\# #\[ 'map-reader-macro)
                              (set-macro-character #\] (lambda (stream char)
                                                         (declare (ignore stream char))
                                                         (error "No matching [ for ]")))))
                (cons "HASH-SET" (lambda ()
-                                  (set-dispatch-macro-character #\# #\{ 'hash-set-reader-macro)
-                                  (set-macro-character #\} (lambda (stream char)
-                                                             (declare (ignore stream char))
-                                                             (error "No matching { for }"))))))))
+                                  (set-dispatch-macro-character #\# #\{
+                                                                'hash-set-reader-macro)
+                                  (set-macro-character #\}
+                                                       (lambda (stream char)
+                                                         (declare (ignore stream char))
+                                                         (error "No matching { for }"))))))))
     (push *readtable* *previous-readtables*)
     (setq *readtable* (copy-readtable))
     (mapcar (lambda (reader-macro-identifier)
@@ -93,33 +96,45 @@
         (collect (read stream nil))
         (finally (read-char stream nil))))
 
-(defun guess-num-args (body)
-  (let* ((symbols (alexandria:flatten body))
-         (arg-symbols (intersection symbols '(- -- ---))))
-    (cond ((member '--- arg-symbols) 3)
-          ((member '-- arg-symbols) 2)
-          ((member '- arg-symbols) 1)
-          (t 0))))
+;;; Consider the case when the package is not "used" and the user used "-" and "---"
+;;; in the function body. Then, we need to include "--" from this package, and
+;;; and other symbols must either be kept in their original packages, or
+;;; all the symbols must be replaced by the symbols in this package consistently.
+;;; We choose the first method.
+(defun construct-parameter-list (body may-be-body)
+  (let* ((arg-symbols (remove-if-not
+                       (lambda (elt)
+                         (and (symbolp elt)
+                              (member (symbol-name elt) '("-" "--" "---")
+                                      :test 'string=)))
+                       (alexandria:flatten body)))
+         (n (if (typep may-be-body '(integer 0 3))
+                may-be-body
+                (cond ((member "---" arg-symbols :test 'string=) 3)
+                      ((member "--" arg-symbols :test 'string=) 2)
+                      ((member "-" arg-symbols :test 'string=) 1)
+                      (t 0)))))
+    (iter (for i below n)
+          (for arg-symbol = (car arg-symbols))
+          (for our-arg-name
+               initially "-"
+               then (concatenate 'string our-arg-name "-"))
+          (if (and arg-symbol
+                   (string= (symbol-name arg-symbol)
+                            our-arg-name))
+              (progn (collect arg-symbol)
+                     (setq arg-symbol (cdr arg-symbols)))
+              (progn (collect (intern our-arg-name)))))))
 
-(defun lambda-reader-macro (stream char) 
+(defun lambda-reader-macro (stream char)
   (declare (ignore char))
   (let* ((may-be-body (read stream))
-         (num-args-p (if (typep may-be-body '(integer 0 3))
-                        may-be-body
-                        nil))
-         (num-args (if (typep may-be-body '(integer 0 3))
-                       may-be-body
-                       (guess-num-args may-be-body)))
-         (body (if num-args-p (read stream) may-be-body)))
-    `(lambda ,@(ecase num-args
-                 (0 `((&optional &rest args)
-                      (declare (ignorable args))))
-                 (1 `((&optional - &rest args)
-                      (declare (ignorable - args))))
-                 (2 `((&optional - -- &rest args)
-                      (declare (ignorable - -- args))))
-                 (3 `((&optional - -- --- &rest args)
-                      (declare (ignorable - -- --- args)))))
+         (body (if (typep may-be-body '(integer 0 3))
+                   (read stream)
+                   may-be-body))
+         (parameter-list (construct-parameter-list body may-be-body)))
+    `(lambda (&optional ,@parameter-list &rest args)
+       (declare (ignorable ,@parameter-list args))
        ,body)))
 
 (defun map-reader-macro (stream char n)

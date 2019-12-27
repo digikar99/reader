@@ -1,5 +1,5 @@
 (defpackage :reader-test
-  (:use :cl :prove :reader :alexandria))
+  (:use :cl :prove :alexandria))
 (in-package :reader-test)
 
 (plan nil)
@@ -16,7 +16,7 @@
   (defstruct bar a))
 
 
-(enable-reader-syntax 'get-val 'hash-table)
+(reader:enable-reader-syntax 'get-val 'hash-table)
 
 (defmacro with-env (&body body)
   `(let ((str (copy-array "abcde"))
@@ -88,8 +88,8 @@
         #(0 0)
         :test 'equalp)))
 
-(disable-reader-syntax)
-(enable-reader-syntax 'lambda 'map 'hash-set)
+(reader:disable-reader-syntax)
+(reader:enable-reader-syntax 'lambda 'map 'hash-set)
 
 (deftest lambda-reader-macro
   (is-type λ() 'function)
@@ -114,4 +114,4 @@
     (is-type (hash-set:hs-memberp hash-set 1) t)
     (is-type (hash-set:hs-memberp hash-set 2) 'null)))
 
-(disable-reader-syntax)
+(reader:disable-reader-syntax)
