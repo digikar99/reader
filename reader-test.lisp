@@ -1,12 +1,10 @@
 (defpackage :reader-test
-  (:use :cl :prove :alexandria))
+  (:use :cl :reader-test-framework :alexandria :reader)
+  (:export :run))
 (in-package :reader-test)
 
-(plan nil)
-(setq *default-reporter* :tap)
-
-;; Owing to the use of let forms, try running tests after package reloading,
-;; in case of failures.
+(defun run ()
+  (run-test-package :reader-test))
 
 (eval-when (:compile-toplevel :execute :load-toplevel)
   (defclass foo () ((a :initform 3)))
@@ -14,7 +12,6 @@
   (defmethod (setf get-val) (new-value (object foo) &rest slot/s)
     (setf (slot-value object (car slot/s)) new-value))
   (defstruct bar a))
-
 
 (reader:enable-reader-syntax 'get-val 'hash-table)
 
@@ -33,7 +30,7 @@
          (struct (make-bar :a 3)))
      ,@body))
 
-(deftest get-val
+(define-test get-val
   (with-env
     (is [str 0] #\a)
     (is [vec 0] 'a)
@@ -48,7 +45,7 @@
     (is [clos-object 'a] 3)
     (is [struct 'a] 3)))
 
-(deftest setf-get-val
+(define-test setf-get-val
   (with-env
     (is (progn (setf [str 0] #\f)
                [str 0])
@@ -70,7 +67,7 @@
                [struct 'a])
         7)))
 
-(deftest get-val-numcl
+(define-test get-val-numcl
   (let* ((array #2A((1 2 3) (4 5 6)))
          (num-array (numcl:asarray array)))
     (is [array 0 0] 1)
@@ -78,7 +75,7 @@
         #(1 4)
         :test 'equalp)))
 
-(deftest setf-get-val-numcl
+(define-test setf-get-val-numcl
   (let* ((array #2A((1 2 3) (4 5 6)))
          (num-array (numcl:asarray array)))
     (setf [array 0 0] 0)
@@ -91,7 +88,7 @@
 (reader:disable-reader-syntax)
 (reader:enable-reader-syntax 'lambda 'map 'hash-set)
 
-(deftest lambda-reader-macro
+(define-test lambda-reader-macro
   (is-type λ() 'function)
   (is (λ(+ - --) 2 3) 5)
   (is (λ(list -) 'a) '(a) :test #'equalp)
@@ -99,14 +96,14 @@
       20)
   (is (λ3(null args) 1 2 3) t))
 
-(deftest map-reader-macro
-  (is #[λ(write-to-string -) '(2 5 a)]
+(define-test map-reader-macro
+  (is #[λ(format nil "~D" -) '(2 5 a)]
       '("2" "5" "A"))
   (is #[λ(+ - --) #(1 2 3) #(2 3 4)]
       #(3 5 7)
       :test 'equalp))
 
-(deftest hash-set-reader-macro
+(define-test hash-set-reader-macro
   (let ((hash-set #{'a 'b 1}))
     (is-type hash-set 'hash-set:hash-set)
     (is-type (hash-set:hs-memberp hash-set 'a) t)

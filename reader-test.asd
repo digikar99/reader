@@ -1,6 +1,7 @@
 (defsystem :reader-test
-  :author "Shubhamkar B. Ayare"
-  :license "MIT"
-  :depends-on (:prove :reader)
-  :components ((:file "reader-test"))
-  :description "Test system for reader") 
+    :author "Shubhamkar B. Ayare"
+    :license "MIT"
+    :depends-on (:reader :iterate :alexandria)
+    :components ((:file "reader-test-framework")
+                 (:file "reader-test"))
+    :description "Test system for reader") 
