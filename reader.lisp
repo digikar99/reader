@@ -4,7 +4,8 @@
    :args
    :get-val
    :enable-reader-syntax
-   :disable-reader-syntax))
+   :disable-reader-syntax
+   :*automatically-unsimplify-array*))
 
 (in-package :reader)
 

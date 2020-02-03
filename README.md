@@ -15,24 +15,24 @@
 CL-USER> (mapcar λ(write-to-string -) '(2 3 4)) ; lambdas
 ("2" "3" "4")
 CL-USER> #[λ(+ - --) '(2 3 4) '(4 5 6)]         ; generic-cl:map (lists or vectors)
-(6 8 10)
+(6 8 10)                                        ; might be removed in future
 CL-USER> (gethash 'a {:eq 'a 1 'b 2})           ; hash-tables
 1
 T
-CL-USER> (hash-set:hs-memberp #{"a" "b" "c"} "c") ; hash-set
+CL-USER> (hash-set:hs-memberp #{"a" "b" "c"} "c") ; hash-set - can change in future
 T
 CL-USER> [#2A((1 2 3) (4 5 6)) 1 0]             ; accessors
 4
-CL-USER> (let ((arr (numcl:asarray #2A((1 2 3) (4 5 6)))))
-           [arr t 0])
-#(1 4)                  ; simple-arrays use aref and arrays use numcl:aref
+CL-USER> (let ((arr #2A((1 2 3) (4 5 6))))      ; arrays are unsimplified by default
+           [arr t 0])                           ; and numcl:aref is used
+#(1 4)                                          ; see reader:*automatically-unsimplify-array*
 CL-USER> [{"a" 1 "b" 2} "a"]                    ; accessors
 1
 T
 CL-USER> [(cl-json:decode-json-from-string "{\"a\":1, \"b\":2}") :b]
 2                                               ; works with alists
-CL-USER> [{"a" "apple" "b" "ball"} "b" 1]       ; accessors can be chained
-#\a
+CL-USER> (-> {"a" "apple" "b" "ball"} ["b"] [1]); accessors can be chained using arrow-macros:->
+#\a                                             ; arrow-macros is not included
 ```
 
 See [reader-test.lisp](reader-test.lisp) for more examples.
@@ -47,7 +47,7 @@ See [reader-test.lisp](reader-test.lisp) for more examples.
 
 ```lisp
 (ql:quickload :reader-test)
-(prove:run-test-package :reader-test)
+(reader-test:run)
 ```
 
 # Modifications for emacs
