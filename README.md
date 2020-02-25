@@ -1,3 +1,7 @@
+# Warning
+
+>This library is currently unstable. Off-limit things include mapping-syntax - being replaced by array syntax; and internal handling of slicing functions.
+
 # Examples
 
 ```lisp

@@ -13,7 +13,7 @@
 
 (defun %enable-reader-syntax (&rest reader-macro-identifiers)
   "READER-MACRO-IDENTIFIERS are any of the following symbols:
-  LAMBDA, GET-VAL, HASH-TABLE, MAP, HASH-SET"
+  LAMBDA, GET-VAL, HASH-TABLE, ARRAY, HASH-SET"
   (let ((reader-macro-identifier-strings (mapcar #'symbol-name
                                                  reader-macro-identifiers))
         (reader-macro-activation-functions
@@ -31,11 +31,11 @@
                                                           (lambda (stream char)
                                                             (declare (ignore stream char))
                                                             (error "No matching { for }")))))
-               (cons "MAP" (lambda ()
-                             (set-dispatch-macro-character #\# #\[ 'map-reader-macro)
-                             (set-macro-character #\] (lambda (stream char)
-                                                        (declare (ignore stream char))
-                                                        (error "No matching [ for ]")))))
+               (cons "ARRAY" (lambda ()
+                               (set-dispatch-macro-character #\# #\[ 'array-reader-macro)
+                               (set-macro-character #\] (lambda (stream char)
+                                                          (declare (ignore stream char))
+                                                          (error "No matching [ for ]")))))
                (cons "HASH-SET" (lambda ()
                                   (set-dispatch-macro-character #\# #\{
                                                                 'hash-set-reader-macro)
@@ -77,7 +77,7 @@
   (:macro-char #\} (lambda (stream char)
                      (declare (ignore stream char))
                      (error "No matching { for }")))
-  (:dispatch-macro-char #\# #\[ 'map-reader-macro)
+  (:dispatch-macro-char #\# #\[ 'array-reader-macro)
   (:dispatch-macro-char #\# #\] (lambda (stream char)
                                   (declare (ignore stream char))
                                   (error "No matching [ for ]")))
@@ -134,10 +134,28 @@
        (declare (ignorable ,@parameter-list args))
        ,body)))
 
-(defun map-reader-macro (stream char n)
+(defun array-reader-macro (stream char n)
   (declare (ignore char n))
-  (let ((args (read-stream-until stream #\])))
-    `(generic-cl:map ,@args)))
+  (flet ((read-stream-as-string-until (stream until-char)
+           (iter (for next-char = (peek-char nil stream nil))
+                 (unless next-char (next-iteration))
+                 (until (char= until-char next-char))
+                 (collect (read-char stream nil)
+                   into string result-type 'string)
+                 (finally (read-char stream nil)
+                          (return string))))
+         (read-row-from-string (string)
+           (with-input-from-string (str string)
+             (iter (for obj = (read str nil))
+                   (while obj)
+                   (collect obj)))))
+    (let* ((element-list (str:split-omit-nulls #\newline
+                                               (read-stream-as-string-until stream #\])))
+           (*read-eval* nil)
+           (num-rows (length element-list))
+           (num-cols (length (read-row-from-string (first element-list)))))
+      (make-array (list num-rows num-cols) :adjustable t
+                  :initial-contents (mapcar #'read-row-from-string element-list)))))
 
 (defmacro defmethods-with-setf (fun-name lambda-list &rest methods)
   `(progn
@@ -185,8 +203,11 @@
   (assert (= 1 (length key/s)))
   (setf (nth (car key/s) object) new-value))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;; ARRAY INDEXING ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defmethod get-val ((object array) &rest key/s)
-  (apply #'numcl:aref object key/s))
+  (apply #'numcl:aref (numcl:asarray object) key/s))
 
 (defmethod (setf get-val) (new-value (object array) &rest key/s)
   (setf (apply #'numcl:aref object key/s) new-value))
@@ -201,6 +222,8 @@
 
 (defmethod (setf get-val) (new-value (object simple-array) &rest key/s)
   (setf (apply #'aref object key/s) new-value))
+
+;;;;;;;;;;;;;;;;;;;;;;;; the remaining reader macros ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun get-val-reader-macro (stream char)
   (declare (ignore char))

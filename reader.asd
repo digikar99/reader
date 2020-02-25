@@ -9,7 +9,8 @@
                "alexandria"
                "trivial-types"
                "numcl"
-               "generic-cl")
+               "generic-cl"
+               "str")
   :components ((:file "reader")))
 
 
