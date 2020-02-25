@@ -86,7 +86,7 @@
         :test 'equalp)))
 
 (reader:disable-reader-syntax)
-(reader:enable-reader-syntax 'lambda 'map 'hash-set)
+(reader:enable-reader-syntax 'lambda 'array 'hash-set)
 
 (define-test lambda-reader-macro
   (is-type λ() 'function)
@@ -96,11 +96,15 @@
       20)
   (is (λ3(null args) 1 2 3) t))
 
-(define-test map-reader-macro
-  (is #[λ(format nil "~D" -) '(2 5 a)]
-      '("2" "5" "A"))
-  (is #[λ(+ - --) #(1 2 3) #(2 3 4)]
+(define-test array-reader-macro
+  (is (let ((a 3) (b 5) (c 7)) #[a b c])
       #(3 5 7)
+      :test 'equalp)
+  (is (let ((a 3) (b 5) (c 7)) #[[a b c
+                                  c b a]
+                                 [a b c
+                                  c b a]])
+      #3A(((3 5 7) (7 5 3)) ((3 5 7) (7 5 3)))
       :test 'equalp))
 
 (define-test hash-set-reader-macro

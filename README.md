@@ -18,8 +18,11 @@
 ```lisp
 CL-USER> (mapcar λ(write-to-string -) '(2 3 4)) ; lambdas
 ("2" "3" "4")
-CL-USER> #[λ(+ - --) '(2 3 4) '(4 5 6)]         ; generic-cl:map (lists or vectors)
-(6 8 10)                                        ; might be removed in future
+CL-USER> #[[1 2 3
+            4 5 6]
+           [3 2 1
+            7 8 9]]
+#3A(((1 2 3) (4 5 6)) ((3 2 1) (7 8 9)))        ; cleaner syntax for arrays
 CL-USER> (gethash 'a {:eq 'a 1 'b 2})           ; hash-tables
 1
 T
