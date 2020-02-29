@@ -229,25 +229,10 @@
   (assert (= 1 (length key/s)))
   (setf (nth (car key/s) object) new-value))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;; ARRAY INDEXING ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (defmethod get-val ((object array) &rest key/s)
-  (apply #'numcl:aref (numcl:asarray object) key/s))
-
+  (apply #'select:select object key/s))
 (defmethod (setf get-val) (new-value (object array) &rest key/s)
-  (setf (apply #'numcl:aref object key/s) new-value))
-
-(defvar *automatically-unsimplify-array* t
-  "If true, get-val automatically converts simple arrays to non-simple arrays and uses numcl:aref.")
-
-(defmethod get-val ((object simple-array) &rest key/s)
-  (if *automatically-unsimplify-array*
-      (apply #'get-val (numcl:asarray object) key/s)
-      (apply #'aref object key/s)))
-
-(defmethod (setf get-val) (new-value (object simple-array) &rest key/s)
-  (setf (apply #'aref object key/s) new-value))
+  (setf (apply #'select:select object key/s) new-value))
 
 ;;;;;;;;;;;;;;;;;;;;;;;; the remaining reader macros ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

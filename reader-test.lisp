@@ -18,6 +18,8 @@
 (defmacro with-env (&body body)
   `(let ((str (copy-array "abcde"))
          (vec (copy-array #(a b c d e)))
+         (arr (copy-array #2A((1 2 3)
+                              (4 5 6))))
          (list (copy-list '(a b c d e)))
          (ht {'a 'b 'c 'd})
          (ht-eq {:eq "a" 1
@@ -34,6 +36,7 @@
   (with-env
     (is [str 0] #\a)
     (is [vec 0] 'a)
+    (is [arr t '(0 2)] #2A((1 3) (4 6)) :test 'equalp)
     (is [list 3] 'd)
     (is [ht 'a] 'b)
     (is [ht-eq (string (copy-array "a"))] nil)
@@ -53,6 +56,10 @@
     (is (progn (setf [vec 0] 'f)
                [vec 0])
         'f)
+    (is (progn (setf [arr t '(0 2)] #2A((1 2) (3 4)))
+               [arr t '(0 2)])
+        #2A((1 2) (3 4))
+        :test 'equalp)
     (is (let ()
           (setf [list 0] 'f)
           [list 0])
@@ -66,24 +73,6 @@
     (is (progn (setf [struct 'a] 7)
                [struct 'a])
         7)))
-
-(define-test get-val-numcl
-  (let* ((array #2A((1 2 3) (4 5 6)))
-         (num-array (numcl:asarray array)))
-    (is [array 0 0] 1)
-    (is [num-array t 0]
-        #(1 4)
-        :test 'equalp)))
-
-(define-test setf-get-val-numcl
-  (let* ((array #2A((1 2 3) (4 5 6)))
-         (num-array (numcl:asarray array)))
-    (setf [array 0 0] 0)
-    (is [array 0 0] 0)
-    (setf [num-array t 0] (numcl:zeros 2))
-    (is [num-array t 0]
-        #(0 0)
-        :test 'equalp)))
 
 (reader:disable-reader-syntax)
 (reader:enable-reader-syntax 'lambda 'array 'hash-set)
