@@ -75,7 +75,7 @@
         7)))
 
 (reader:disable-reader-syntax)
-(reader:enable-reader-syntax 'lambda 'array 'hash-set 'interpol)
+(reader:enable-reader-syntax 'lambda 'array 'hash-set)
 
 (define-test lambda-reader-macro
   (is-type λ() 'function)
@@ -103,10 +103,5 @@
     (is-type (hash-set:hs-memberp hash-set 'b) t)
     (is-type (hash-set:hs-memberp hash-set 1) t)
     (is-type (hash-set:hs-memberp hash-set 2) 'null)))
-
-(define-test working-with-interpol
-  (let ((arr #[1 2 3
-               4 5 6]))
-    (is #?"${arr}" "#2A((1 2 3) (4 5 6))")))
 
 (reader:disable-reader-syntax)

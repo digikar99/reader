@@ -10,8 +10,7 @@
                "alexandria"
                "trivial-types"
                "select"
-               "str" ;; str uses cl-interpol; so no overhead!
-               "cl-interpol")
+               "str")
   :components ((:file "reader")))
 
 
