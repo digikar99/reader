@@ -13,7 +13,7 @@
 
 (defun %enable-reader-syntax (&rest reader-macro-identifiers)
   "READER-MACRO-IDENTIFIERS are any of the following symbols:
-  LAMBDA, GET-VAL, HASH-TABLE, ARRAY, HASH-SET"
+  LAMBDA, GET-VAL, HASH-TABLE, ARRAY, HASH-SET, INTERPOL"
   (let ((reader-macro-identifier-strings (mapcar #'symbol-name
                                                  reader-macro-identifiers))
         (reader-macro-activation-functions
@@ -42,7 +42,10 @@
                                   (set-macro-character #\}
                                                        (lambda (stream char)
                                                          (declare (ignore stream char))
-                                                         (error "No matching { for }"))))))))
+                                                         (error "No matching { for }")))))
+               (cons "INTERPOL" (lambda ()
+                                  (cl-interpol:enable-interpol-syntax)
+                                  t)))))
     (push *readtable* *previous-readtables*)
     (setq *readtable* (copy-readtable))
     (mapcar (lambda (reader-macro-identifier)
@@ -51,13 +54,14 @@
                                    :test #'string=))))
             reader-macro-identifier-strings)))
 
-(defmacro enable-reader-syntax (&rest reader-macro-identifiers)  
+(defmacro enable-reader-syntax (&rest reader-macro-identifiers)
   "READER-MACRO-IDENTIFIERS are any of the following symbols:
-  LAMBDA, GET-VAL, HASH-TABLE, MAP, HASH-SET"
+  LAMBDA, GET-VAL, HASH-TABLE, ARRAY, HASH-SET, INTERPOL"
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (%enable-reader-syntax ,@reader-macro-identifiers)))
 
 (defun %disable-reader-syntax ()
+  (cl-interpol:disable-interpol-syntax)
   (setq *readtable* (if *previous-readtables*
                         (pop *previous-readtables*)
                         (copy-readtable nil))))
