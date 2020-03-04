@@ -45,6 +45,7 @@ See [reader-test.lisp](reader-test.lisp) for more examples.
 - `{"a" 1 "b" 2}` - hash tables use `'equal` as the default test. The intended test function (one of `(:eq :eql :equalp :equal)` can be specified as the first element of the literal syntax; conversely, these cannot be used as the first keys of the hash table. Besides providing with a choice, this also gets the indentation correct (see [Modification for emacs](#modifications-for-emacs).
 - `(setf [] ...)` does not work with alists and plists. Modifying alists and plists destructively would likely require compiler macros.
 - `λ` can take up to 3 arguments, and the remaining are captured by `&rest args`. Further, an optional integer (from 0 to 3 both inclusive) can be put in front of `λ` to indicate the number of arguments before `&rest args`: `(λ2(identity args) 1 2 3 4) => (3 4)` vs `(λ(identity args) 1 2 3 4) => (1 2 3 4)`
+- `[...]` (`get-val`) does not work inside `#[...]` (`array`) syntax. I do not have a plan or haven't figured out how to combine the two; and I find that okay since the `array` syntax is meant for cleaner representation in works involving matrices.
 
 ## Testing
 
