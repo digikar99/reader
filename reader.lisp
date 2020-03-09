@@ -42,7 +42,11 @@
                                   (set-macro-character #\}
                                                        (lambda (stream char)
                                                          (declare (ignore stream char))
-                                                         (error "No matching { for }"))))))))
+                                                         (error "No matching { for }")))))
+               (cons "RUN-PROGRAM"
+                     (lambda ()
+                       (set-dispatch-macro-character #\# #\!
+                                                     'run-program-reader-macro))))))
     (push *readtable* *previous-readtables*)
     (setq *readtable* (copy-readtable))
     (mapcar (lambda (reader-macro-identifier)
@@ -53,7 +57,7 @@
 
 (defmacro enable-reader-syntax (&rest reader-macro-identifiers)  
   "READER-MACRO-IDENTIFIERS are any of the following symbols:
-  LAMBDA, GET-VAL, HASH-TABLE, MAP, HASH-SET"
+  LAMBDA, GET-VAL, HASH-TABLE, MAP, HASH-SET, RUN-PROGRAM"
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (%enable-reader-syntax ,@reader-macro-identifiers)))
 
@@ -81,7 +85,8 @@
   (:dispatch-macro-char #\# #\{ 'hash-set-reader-macro)
   (:dispatch-macro-char #\# #\} (lambda (stream char)
                                   (declare (ignore stream char))
-                                  (error "No matching { for }"))))
+                                  (error "No matching { for }")))
+  (:dispatch-macro-char #\# #\! 'run-program-reader-macro))
 
 (defun read-stream-until (stream until-char)
   (iter (for next-char = (peek-char t stream nil))
@@ -261,3 +266,7 @@
                                            #\}))
                              (collect (read stream))
                              (finally (read-char stream nil))))))
+
+(defun run-program-reader-macro (stream char n)
+  (declare (ignore char n))
+  `(uiop:run-program ,(read-line stream) :output t))

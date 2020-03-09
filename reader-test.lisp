@@ -75,7 +75,7 @@
         7)))
 
 (reader:disable-reader-syntax)
-(reader:enable-reader-syntax 'lambda 'array 'hash-set)
+(reader:enable-reader-syntax 'lambda 'array 'hash-set 'run-program)
 
 (define-test lambda-reader-macro
   (is-type λ() 'function)
@@ -103,5 +103,11 @@
     (is-type (hash-set:hs-memberp hash-set 'b) t)
     (is-type (hash-set:hs-memberp hash-set 1) t)
     (is-type (hash-set:hs-memberp hash-set 2) 'null)))
+
+(define-test run-program-reader-macro
+  (is (with-output-to-string (*standard-output*)
+        #!echo -n hello world
+        )
+      "hello world"))
 
 (reader:disable-reader-syntax)

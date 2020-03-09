@@ -10,7 +10,8 @@
                "alexandria"
                "trivial-types"
                "select"
-               "str")
+               "str"
+               "uiop")
   :components ((:file "reader")))
 
 
