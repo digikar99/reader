@@ -12,8 +12,6 @@
 (defvar *previous-readtables* nil)
 
 (defun %enable-reader-syntax (&rest reader-macro-identifiers)
-  "READER-MACRO-IDENTIFIERS are any of the following symbols:
-  LAMBDA, GET-VAL, HASH-TABLE, ARRAY, HASH-SET"
   (let ((reader-macro-identifier-strings (mapcar #'symbol-name
                                                  reader-macro-identifiers))
         (reader-macro-activation-functions
@@ -31,6 +29,9 @@
                                                           (lambda (stream char)
                                                             (declare (ignore stream char))
                                                             (error "No matching { for }")))))
+               (cons "NOT" (lambda () (set-macro-character #\! 'not-reader-macro)))
+               (cons "STRING" (lambda () (set-macro-character #\$ 'string-reader-macro)))
+               (cons "DESCRIBE" (lambda () (set-macro-character #\? 'describe-reader-macro)))
                (cons "ARRAY" (lambda ()
                                (set-dispatch-macro-character #\# #\[ 'array-reader-macro)
                                (set-macro-character #\] (lambda (stream char)
@@ -57,7 +58,7 @@
 
 (defmacro enable-reader-syntax (&rest reader-macro-identifiers)  
   "READER-MACRO-IDENTIFIERS are any of the following symbols:
-  LAMBDA, GET-VAL, HASH-TABLE, MAP, HASH-SET, RUN-PROGRAM"
+  LAMBDA, GET-VAL, HASH-TABLE, NOT, STRING, DESCRIBE, ARRAY, HASH-SET, RUN-PROGRAM"
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (%enable-reader-syntax ,@reader-macro-identifiers)))
 
@@ -81,6 +82,9 @@
   (:macro-char #\} (lambda (stream char)
                      (declare (ignore stream char))
                      (error "No matching { for }")))
+  (:macro-char #\! 'not-reader-macro)
+  (:macro-char #\$ 'string-reader-macro)
+  (:macro-char #\? 'describe-reader-macro)
   (:dispatch-macro-char #\# #\[ 'array-reader-macro)
   (:dispatch-macro-char #\# #\{ 'hash-set-reader-macro)
   (:dispatch-macro-char #\# #\} (lambda (stream char)
@@ -270,3 +274,15 @@
 (defun run-program-reader-macro (stream char n)
   (declare (ignore char n))
   `(uiop:run-program ,(read-line stream) :output t))
+
+(defun not-reader-macro (stream char)
+  (declare (ignore char))
+  `(not ,(read stream)))
+
+(defun string-reader-macro (stream char)
+  (declare (ignore char))
+  `(write-to-string ,(read stream)))
+
+(defun describe-reader-macro (stream char)
+  (declare (ignore char))
+  `(describe (quote ,(read stream))))

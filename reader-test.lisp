@@ -75,7 +75,8 @@
         7)))
 
 (reader:disable-reader-syntax)
-(reader:enable-reader-syntax 'lambda 'array 'hash-set 'run-program)
+(reader:enable-reader-syntax 'lambda 'array 'hash-set
+                             'run-program 'not 'string 'describe)
 
 (define-test lambda-reader-macro
   (is-type λ() 'function)
@@ -109,5 +110,17 @@
         #!echo -n hello world
         )
       "hello world"))
+
+(define-test not-reader-macro
+  (is (let ((a t)) !a) nil))
+
+(define-test string-reader-macro
+  (is (let ((a 5.0d0)) $a) "5.0d0"))
+
+(define-test describe-reader-macro
+  (is (with-output-to-string (*standard-output*)
+        ?reader:enable-reader-syntax)
+      (with-output-to-string (*standard-output*)
+        (describe 'reader:enable-reader-syntax))))
 
 (reader:disable-reader-syntax)

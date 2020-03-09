@@ -1,7 +1,7 @@
 # Examples
 
 ```lisp
-(named-readtables:in-readtables reader:reader)
+(named-readtables:in-readtables reader:reader) ; not recommended with slime
 ;;  OR 
 (reader:enable-reader-syntax &rest reader-macro-identifiers) ; check (describe)
 ;; another way, until SLIME allows changing readtables more than twice
@@ -36,6 +36,24 @@ CL-USER> [(cl-json:decode-json-from-string "{\"a\":1, \"b\":2}") :b]
 2                                               ; works with alists
 CL-USER> (-> {"a" "apple" "b" "ball"} ["b"] [1]); accessors can be chained using arrow-macros:->
 #\a                                             ; arrow-macros is not included
+CL-USER> #!echo -n hello world                  ; execute shell commands 
+hello world                                     ; using uiop:run-program
+NIL                                             ; not intended for using variables
+NIL
+0
+CL-USER> (let ((a t)) !a)                       ; not
+NIL
+CL-USER> (let ((a 5.0d0)) $a)                   ; write-to-string
+"5.0d0"                   ; should this be "ensure-string"? raise an issue!
+CL-USER> ?reader:enable-reader-syntax           ; variable use not intended
+READER:ENABLE-READER-SYNTAX
+  [symbol]
+ENABLE-READER-SYNTAX names a macro:
+  Lambda-list: (&REST READER::READER-MACRO-IDENTIFIERS)
+  Documentation:
+    READER-MACRO-IDENTIFIERS are any of the following symbols:
+      LAMBDA, GET-VAL, HASH-TABLE, NOT, STRING, DESCRIBE, ARRAY, HASH-SET, RUN-PROGRAM
+  Source file: /home/user/portacle/projects/reader/reader.lisp
 ```
 
 See [reader-test.lisp](reader-test.lisp) for more examples.
