@@ -3,7 +3,7 @@
   :license "MIT"
   :version "0.9.1" ;; beta
   :author "Shubhamkar Ayare (shubhamayare@yahoo.co.in)"
-  :description "A utility library intended at providing reader macros for lambdas, arrays, accessors, hash-tables and hash-sets."
+  :description "A utility library intended at providing reader macros for lambda, get-val, hash-table, not, string, describe, array, hash-set and run-program."
   :depends-on ("iterate"
                "named-readtables"
                "hash-set"
