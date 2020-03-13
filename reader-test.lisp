@@ -97,6 +97,18 @@
       #3A(((3 5 7) (7 5 3)) ((3 5 7) (7 5 3)))
       :test 'equalp))
 
+(define-test use-numcl-array
+  (is (let ((*use-numcl-array* t)
+            (*package* (find-package :reader-test)))
+        (read-from-string "#[a b c]"))
+      '(numcl.exported:asarray (list a b c))
+      :test 'equalp)
+  (is (let ((*use-numcl-array* nil)
+            (*package* (find-package :reader-test)))
+        (read-from-string "#[a b c]"))
+      '(make-array '(3) :adjustable t :initial-contents (list a b c))
+      :test 'equalp))
+
 (define-test hash-set-reader-macro
   (let ((hash-set #{'a 'b 1}))
     (is-type hash-set 'hash-set:hash-set)

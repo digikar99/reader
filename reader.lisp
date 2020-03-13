@@ -5,7 +5,7 @@
    :get-val
    :enable-reader-syntax
    :disable-reader-syntax
-   :*automatically-unsimplify-array*))
+   :*use-numcl-array*))
 
 (in-package :reader)
 
@@ -181,13 +181,17 @@
                                                         (mapcar #'read-row-from-string element-list)))
                                     (list num-rows num-cols)))))))))))
 
+(defvar *use-numcl-array* nil
+  "ARRAY-READER-MACRO uses NUMCL:ASARRAY for array construction if *USE-NUMCL-ARRAY* is T else uses CL:MAKE-ARRAY if NIL. Since reader macros are expanded before compilation, this variable must be set before the other macros are expanded; may be by using read-time-eval macro #.(...).")
+
 (defun array-reader-macro (stream char n)
   (declare (ignore char n))
-  (let ((initial-contents (gensym))
-        (array-dimensions (gensym)))
-    (multiple-value-bind (initial-contents array-dimensions) (read-array stream)
-      `(make-array ',array-dimensions :adjustable t
-                   :initial-contents ,initial-contents))))
+  (multiple-value-bind (initial-contents array-dimensions) (read-array stream)
+    (declare (ignorable array-dimensions))
+    (if *use-numcl-array*
+        `(numcl:asarray ,initial-contents)
+        `(make-array ',array-dimensions :adjustable t
+                     :initial-contents ,initial-contents))))
 
 (defmacro defmethods-with-setf (fun-name lambda-list &rest methods)
   `(progn
