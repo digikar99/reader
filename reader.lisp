@@ -188,10 +188,8 @@
   (declare (ignore char n))
   (multiple-value-bind (initial-contents array-dimensions) (read-array stream)
     (declare (ignorable array-dimensions))
-    (if *use-numcl-array*
-        `(numcl:asarray ,initial-contents)
-        `(make-array ',array-dimensions :adjustable t
-                     :initial-contents ,initial-contents))))
+    `(make-array ',array-dimensions :adjustable t
+                 :initial-contents ,initial-contents)))
 
 (defmacro defmethods-with-setf (fun-name lambda-list &rest methods)
   `(progn
@@ -241,11 +239,11 @@
 
 (defmethod get-val ((object array) &rest key/s)
   (if *use-numcl-array*
-      (apply #'numcl:aref object key/s)
+      (apply #'in:aref object key/s)
       (apply #'select:select object key/s)))
 (defmethod (setf get-val) (new-value (object array) &rest key/s)
   (if *use-numcl-array*
-      (setf (apply #'numcl:aref object key/s) new-value)
+      (setf (apply #'in:aref object key/s) new-value)
       (setf (apply #'select:select object key/s) new-value)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;; the remaining reader macros ;;;;;;;;;;;;;;;;;;;;;;;;;;;;

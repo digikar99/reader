@@ -12,6 +12,6 @@
                "select"
                "str"
                "uiop"
-               "numcl")
+               "inferior-numcl")
   :components ((:file "reader")))
 

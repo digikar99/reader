@@ -1,3 +1,7 @@
+# Installation
+
+Download from the [Releases section](https://github.com/digikar99/reader/releases). `master` branch is under construction until stability!
+
 # Examples
 
 ```lisp
