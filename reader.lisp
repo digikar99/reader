@@ -240,9 +240,13 @@
   (setf (nth (car key/s) object) new-value))
 
 (defmethod get-val ((object array) &rest key/s)
-  (apply #'select:select object key/s))
+  (if *use-numcl-array*
+      (apply #'numcl:aref object key/s)
+      (apply #'select:select object key/s)))
 (defmethod (setf get-val) (new-value (object array) &rest key/s)
-  (setf (apply #'select:select object key/s) new-value))
+  (if *use-numcl-array*
+      (setf (apply #'numcl:aref object key/s) new-value)
+      (setf (apply #'select:select object key/s) new-value)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;; the remaining reader macros ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
