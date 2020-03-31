@@ -2,17 +2,27 @@
 
 Download from the [Releases section](https://github.com/digikar99/reader/releases). `master` branch is under construction until stability!
 
-# Examples
+# Getting Started
 
 ```lisp
 (named-readtables:in-readtables reader:reader) ; not recommended with slime
 ;;  OR 
-(reader:enable-reader-syntax &rest reader-macro-identifiers) ; check (describe)
+(reader:enable-reader-syntax &rest reader-macro-identifiers) ; preferred
+;; (describe 'reader:enable-reader-syntax) ; for a list of identifiers
 ;; another way, until SLIME allows changing readtables more than twice
-;; (disable-reader-syntax) ; is complementary
+;; (reader:disable-reader-syntax) ; is complementary
 ```
 
+Also
 
+```lisp
+(setq *use-numcl-arrays* t) ; is nil by default
+;; uses numcl:asarray if t; carries some overhead
+```
+
+Currently, the choice of `*use-numcl-arrays*` needs to be made upfront - the difference is between that of `numcl:aref` and `select:select`.
+
+# Examples
 
 
 ```lisp

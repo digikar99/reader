@@ -5,7 +5,7 @@
    :get-val
    :enable-reader-syntax
    :disable-reader-syntax
-   :*use-numcl-array*))
+   :*use-numcl-arrays*))
 
 (in-package :reader)
 
@@ -181,15 +181,17 @@
                                                         (mapcar #'read-row-from-string element-list)))
                                     (list num-rows num-cols)))))))))))
 
-(defvar *use-numcl-array* nil
-  "ARRAY-READER-MACRO uses NUMCL:ASARRAY for array construction if *USE-NUMCL-ARRAY* is T else uses CL:MAKE-ARRAY if NIL. Since reader macros are expanded before compilation, this variable must be set before the other macros are expanded; may be by using read-time-eval macro #.(...).")
+(defvar *use-numcl-arrays* nil
+  "ARRAY-READER-MACRO uses NUMCL:ASARRAY for array construction if *USE-NUMCL-ARRAYS* is T else uses CL:MAKE-ARRAY if NIL. Since reader macros are expanded before compilation, this variable must be set before the other macros are expanded; may be by using read-time-eval macro #.(...).")
 
 (defun array-reader-macro (stream char n)
   (declare (ignore char n))
   (multiple-value-bind (initial-contents array-dimensions) (read-array stream)
     (declare (ignorable array-dimensions))
-    `(make-array ',array-dimensions :adjustable t
-                 :initial-contents ,initial-contents)))
+    (if *use-numcl-arrays*
+        `(numcl:asarray ,initial-contents)
+        `(make-array ',array-dimensions :adjustable t
+                     :initial-contents ,initial-contents))))
 
 (defmacro defmethods-with-setf (fun-name lambda-list &rest methods)
   `(progn
@@ -238,12 +240,12 @@
   (setf (nth (car key/s) object) new-value))
 
 (defmethod get-val ((object array) &rest key/s)
-  (if *use-numcl-array*
-      (apply #'in:aref object key/s)
+  (if *use-numcl-arrays*
+      (apply #'numcl:aref object key/s)
       (apply #'select:select object key/s)))
 (defmethod (setf get-val) (new-value (object array) &rest key/s)
-  (if *use-numcl-array*
-      (setf (apply #'in:aref object key/s) new-value)
+  (if *use-numcl-arrays*
+      (setf (apply #'numcl:aref object key/s) new-value)
       (setf (apply #'select:select object key/s) new-value)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;; the remaining reader macros ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
