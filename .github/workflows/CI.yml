@@ -1,0 +1,47 @@
+on:
+  push:
+
+jobs:
+
+  test:
+
+    name: ${{ matrix.lisp }}
+
+    strategy:
+      matrix:
+        lisp: [sbcl, ccl, ecl]
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - name: Update $PATH
+      run: |
+        echo $PATH
+        echo "PATH=$HOME/bin:$PATH" >> $GITHUB_ENV
+    - name: Check $PATH
+      run: echo $PATH
+
+    - name: Download implementation
+      env:
+        LISP: ${{ matrix.lisp }}
+      run: |
+        pwd
+        ls -l
+        bash <(curl -s https://raw.githubusercontent.com/digikar99/lisp-travis-lite/master/run.sh)
+
+    - name: Compile Tests
+      run: cl --eval '(ql:quickload "reader")'
+
+    # Testing it on the second load confirms that functionalities do not
+    # solely eval-when compile-toplevel, and that they persist across multiple loads.
+
+    - name: Run Tests
+      # Why do I need to load FIVEAM even after specifying it in ASDF, and things working correctly locally?!
+      run: cl --eval '(ql:quickload (list "reader" "fiveam"))' --eval '
+                 (let ((5am:*on-error* :debug)
+                       (5am:*on-failure* :debug))
+                   (5am:run :reader))'
+
+

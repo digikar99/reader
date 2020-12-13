@@ -1,33 +1,26 @@
 # Installation
 
-Download from the [Releases section](https://github.com/digikar99/reader/releases). `master` branch is under construction until stability!
+Download from the [Releases section](https://github.com/digikar99/reader/releases).
+
+> I'll promote v0.10.0 to v1.0.0 if there are no significant changes over the next year.
 
 # Getting Started
 
 ```lisp
-(named-readtables:in-readtables reader:reader) ; not recommended with slime
-;;  OR 
-(reader:enable-reader-syntax &rest reader-macro-identifiers) ; preferred
+(reader:enable-reader-syntax &rest reader-macro-identifiers)
+;; OR
+(reader+swank:enable-package-local-reader-syntax &rest reader-macro-identifiers)
 ;; (describe 'reader:enable-reader-syntax) ; for a list of identifiers
-;; another way, until SLIME allows changing readtables more than twice
+
+;; Complementory macros
 ;; (reader:disable-reader-syntax) ; is complementary
+;; OR
+;; (reader+swank-disable-package-local-reader-syntax)
 ```
-
-Also
-
-```lisp
-(setq *use-numcl-arrays* t) ; is nil by default
-;; uses numcl:asarray if t; carries some overhead
-```
-
-Currently, the choice of `*use-numcl-arrays*` needs to be made upfront - the difference is between that of `numcl:aref` and `select:select`.
 
 # Examples
 
-
 ```lisp
-CL-USER> (mapcar λ(write-to-string -) '(2 3 4)) ; lambdas
-("2" "3" "4")
 CL-USER> #[[1 2 3
             4 5 6]
            [3 2 1
@@ -40,20 +33,22 @@ CL-USER> (hash-set:hs-memberp #{"a" "b" "c"} "c") ; hash-set - can change in fut
 T
 CL-USER> [#2A((1 2 3) (4 5 6)) 1 0]             ; accessors
 4
-CL-USER> (let ((arr #2A((1 2 3) (4 5 6))))      ; arrays are unsimplified by default
-           [arr t 0])                           ; and numcl:aref is used
-#(1 4)                                          ; see reader:*automatically-unsimplify-array*
-CL-USER> [{"a" 1 "b" 2} "a"]                    ; accessors
+CL-USER> (setf reader:*get-val-array-function* 'select:select)
+SLCT:SELECT
+CL-USER> (let ((arr #2A((1 2 3) (4 5 6))))
+           [arr t 0])
+#(1 4)
+CL-USER> [{"a" 1 "b" 2} "a"]
 1
 T
-CL-USER> [(cl-json:decode-json-from-string "{\"a\":1, \"b\":2}") :b]
-2                                               ; works with alists
-CL-USER> (-> {"a" "apple" "b" "ball"} ["b"] [1]); accessors can be chained using arrow-macros:->
-#\a                                             ; arrow-macros is not included
-CL-USER> #!echo -n hello world                  ; execute shell commands 
-hello world                                     ; using uiop:run-program
-NIL                                             ; not intended for using variables
-NIL
+CL-USER> [(cl-json:decode-json-from-string "{\"a\":1, \"b\":2}") :b] ; works with alists
+2
+CL-USER> (-> {"a" "apple" "b" "ball"} ["b"] [1]); accessors can be chained using arrows:->
+#\a
+CL-USER> #!echo -n hello world
+hello world                                     ; Captures until the end of line
+NIL                                             ; Should be possible to capture into a string
+NIL                                             ; but not ideal for speed
 0
 CL-USER> (let ((a t)) !a)                       ; not
 NIL
@@ -66,27 +61,80 @@ ENABLE-READER-SYNTAX names a macro:
   Lambda-list: (&REST READER::READER-MACRO-IDENTIFIERS)
   Documentation:
     READER-MACRO-IDENTIFIERS are any of the following symbols:
-      LAMBDA, GET-VAL, HASH-TABLE, NOT, STRING, DESCRIBE, ARRAY, HASH-SET, RUN-PROGRAM
-  Source file: /home/user/portacle/projects/reader/reader.lisp
+      GET-VAL, HASH-TABLE, NOT, STRING, DESCRIBE, ARRAY, SET, RUN-PROGRAM
+  Source file: /home/user/quicklisp/local-projects/reader/reader.lisp
 ```
-
-See [reader-test.lisp](reader-test.lisp) for more examples.
-
 ## Notes
 
-- `{"a" 1 "b" 2}` - hash tables use `'equal` as the default test. The intended test function (one of `(:eq :eql :equalp :equal)` can be specified as the first element of the literal syntax; conversely, these cannot be used as the first keys of the hash table. Besides providing with a choice, this also gets the indentation correct (see [Modification for emacs](#modifications-for-emacs).
-- `(setf [] ...)` does not work with alists and plists. Modifying alists and plists destructively would likely require compiler macros.
-- `λ` can take up to 3 arguments, and the remaining are captured by `&rest args`. Further, an optional integer (from 0 to 3 both inclusive) can be put in front of `λ` to indicate the number of arguments before `&rest args`: `(λ2(identity args) 1 2 3 4) => (3 4)` vs `(λ(identity args) 1 2 3 4) => (1 2 3 4)`
+The functions used for constructing arrays, hash-tables, sets, accessing array elements or accessors in general can be specified by
+
+- `*array-function*`
+- `*hash-table-function*`
+- `*set-function*`
+- `*get-val-array-function*`
+- `*get-val-function*`
+
+This should allow users to use [fset](https://github.com/slburson/fset) or [access](https://github.com/AccelerationNet/access) or other libraries for the respective functions.
+
+By default, alists and plists are treated distinct from lists whenever possible (see the `get-val` method specialized on lists). To disable this behavior, set each of these to `T`:
+
+- `*alists-are-lists*`
+- `*plists-are-lists*`
+
+
+### Hash Tables
+
+- `{"a" 1 "b" 2}` - hash tables use `'equalp` as the default test. The intended test function  can be specified as the first element of the literal syntax. Besides providing with a choice, this also gets the indentation correct (see [Modification for emacs](#modifications-for-emacs).
+
+### Setting alists and plists
+
+- `(setf [] ...)` does not work with empty alists and plists. This seems to require setf-expanders with `get-val` generic-function.
+
+### array vs get-val
+
 - `[...]` (`get-val`) does not work inside `#[...]` (`array`) syntax. I do not have a plan or haven't figured out how to combine the two; and I find that okay since the `array` syntax is meant for cleaner representation in works involving matrices.
+
+## Notes for existing users upgrading to v0.10.0 from v0.9.1
+
+### Lambda
+
+- `lambda` with the following usage has been removed.
+
+```lisp
+CL-USER> (mapcar λ(write-to-string -) '(2 3 4)) ; lambdas
+("2" "3" "4")
+```
+
+This begins to feel like line-noise after a while and is not ideal for readability; a better equivalent is the simple macro
+
+```lisp
+CL-USER> (defmacro lm (&rest var-body)
+           `(lambda ,(butlast var-body)
+              ,@(last var-body)))
+LM
+CL-USER> (mapcar (lm o (write-to-string o)) '(2 3 4))
+("2" "3" "4")
+```
+
+### Hash-table
+
+Since the function used for constructing hash-tables is now configurable (via `reader:*hash-table-function*`), the first input to the hash-table may be interpreted as the equality function. Thus, hash-table syntax can take an even (with default test `cl:equalp`) or odd (with the first symbol being interpreted as the equality function) number of arguments.
+
+
+### Setting alists and plists
+
+Now works for non-empty lists.
 
 ## Testing
 
 ```lisp
-(ql:quickload :reader-test)
-(reader-test:run)
+(ql:quickload "reader")
+(5am:run :reader)
+;; OR
+(asdf:test-system "reader")
 ```
 
-# Modifications for emacs
+# Emacs Indentation Support
 
 ```lisp
 (modify-syntax-entry ?\[ "(]" lisp-mode-syntax-table)
@@ -126,12 +174,6 @@ A work-around is to specify the test as the first element, and let that default 
 ```
 
 # Comments
-
-I'm aware of the [lambda syntax](https://github.com/vseloved/rutils/blob/master/docs/tutorial.md) 
-in rutils and clojure. However, emacs seems to treat `^` specially and something like
-`(member ?\^ '(?\^))` gives an "End of file during parsing" error. This is an issue with
-the modification marked `; for inserting lambda`. Regarding `-` instead of `%1`: the former
-is easier to type than the latter. The `λ()` can take up to 3 (optional) arguments `- -- ---`.
 
 - [`cl-interpol`](http://edicl.github.io/cl-interpol/) is a prominent library providing perl / shell-like string interpolation facilities.
 - [`cl-json`](https://common-lisp.net/project/cl-json/cl-json.html) can be used for parsing JSON.

@@ -1,17 +1,19 @@
-(asdf:defsystem :reader
+(asdf:defsystem "reader"
   :serial t
   :license "MIT"
-  :version "0.9.2" ;; beta
+  :version "0.10.0" ;; beta
   :author "Shubhamkar Ayare (shubhamayare@yahoo.co.in)"
-  :description "A utility library intended at providing reader macros for lambda, get-val, hash-table, not, string, describe, array, hash-set and run-program."
-  :depends-on ("iterate"
-               "named-readtables"
+  :description "A utility library intended at providing configurable reader macros for
+common tasks such as accessors, hash-tables, sets, uiop:run-program, arrays and a few others."
+  :depends-on ("alexandria"
+               "fiveam"
                "hash-set"
-               "alexandria"
+               "iterate"
+               "split-sequence"
                "trivial-types"
-               "select"
-               "str"
-               "uiop"
-               "numcl")
-  :components ((:file "reader")))
+               "uiop")
+  :components ((:file "reader"))
+  :perform (test-op (o c)
+                    (declare (ignore o c))
+                    (eval (read-from-string "(FIVEAM:RUN :READER)"))))
 
