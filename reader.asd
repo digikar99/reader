@@ -15,5 +15,7 @@ common tasks such as accessors, hash-tables, sets, uiop:run-program, arrays and 
   :components ((:file "reader"))
   :perform (test-op (o c)
                     (declare (ignore o c))
-                    (eval (read-from-string "(FIVEAM:RUN :READER)"))))
+                    (eval (read-from-string "(LET ((5AM:*ON-ERROR* :DEBUG)
+                                                   (5AM:*ON-FAILURE* :DEBUG))
+                                               (5AM:RUN :READER))"))))
 

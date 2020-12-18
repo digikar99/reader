@@ -32,16 +32,12 @@ jobs:
         bash <(curl -s https://raw.githubusercontent.com/digikar99/lisp-travis-lite/master/run.sh)
 
     - name: Compile Tests
-      run: cl --eval '(ql:quickload "reader")'
+      run: |
+        cl --eval '(push #P"./" ql:*local-project-directories*)' --eval '(ql:quickload "reader")'
 
     # Testing it on the second load confirms that functionalities do not
     # solely eval-when compile-toplevel, and that they persist across multiple loads.
 
     - name: Run Tests
-      # Why do I need to load FIVEAM even after specifying it in ASDF, and things working correctly locally?!
-      run: cl --eval '(ql:quickload (list "reader" "fiveam"))' --eval '
-                 (let ((5am:*on-error* :debug)
-                       (5am:*on-failure* :debug))
-                   (5am:run :reader))'
-
-
+      run: |
+        cl --eval '(push #P"./" ql:*local-project-directories*)' --eval '(ql:quickload "reader")' --eval '(asdf:test-system "reader")'
