@@ -26,7 +26,7 @@ CL-USER> #[[1 2 3
            [3 2 1
             7 8 9]]
 #3A(((1 2 3) (4 5 6)) ((3 2 1) (7 8 9)))        ; cleaner syntax for arrays
-CL-USER> (gethash 'a {:eq 'a 1 'b 2})           ; hash-tables
+CL-USER> (gethash 'a {eq 'a 1 'b 2})            ; hash-tables
 1
 T
 CL-USER> (hash-set:hs-memberp #{"a" "b" "c"} "c") ; hash-set - can change in future
@@ -168,8 +168,8 @@ Known issues include aligning hash-tables without first-element-as-key:
 A work-around is to specify the test as the first element, and let that default exist for one-liners:
 
 ```lisp
-{:equal "hello" 1
-        "world" 2}
+{equal "hello" 1
+       "world" 2}
 {"hello" 1 "world" 2}
 ```
 
