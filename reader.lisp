@@ -1,5 +1,5 @@
 (defpackage :reader
-  (:use :cl :iterate :hash-set :split-sequence)
+  (:use :cl :iterate :split-sequence)
   (:import-from :fiveam :is :is-true :is-false)
   (:export
    :args
@@ -16,7 +16,7 @@
 
 (in-package :reader)
 (5am:def-suite :reader)
-(5am:in-suite :reader)-
+(5am:in-suite :reader)
 
 ;;;;;;;;;;;;;;;;;;;;;;;; CONFIGURATION VARIABLES ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -47,13 +47,12 @@ as arguments and returns the value corresponding to the KEY/S.")
 as arguments and returns the corresponding value.
 This is assumed to have a SETF defined.
 This variable is significant if READER:*GET-VAL-FUNCTION* is bound to READER:GET-VAL.")
+
 (defparameter *set-function*
-  (defun list-to-hash-set-with-test (list &key test)
-    (declare (ignore test))
-    (hash-set:list-to-hs list))
+  'cl:remove-duplicates
   "A symbol bound (at read-time) to a function that takes
   (LIST &KEY TEST)
-as arguments and returns the set.")
+as arguments and returns the set object.")
 
 (defparameter *alists-are-lists* nil
   "If T, ALISTS will not be treated specially by READER:GET-VAL method for lists.")
@@ -69,7 +68,7 @@ and rather directed towards tests than users. So, do not export."
            (*hash-table-function*    'alexandria:plist-hash-table)
            (*get-val-function*       'get-val)
            (*get-val-array-function* 'cl:aref)
-           (*set-function*           'list-to-hash-set-with-test)
+           (*set-function*           'cl:remove-duplicates)
            (*alists-are-lists*       nil)
            (*plists-are-lists*       nil)
            (*readtable*             (%enable-reader-syntax *readtable* ,@identifiers)))
@@ -328,8 +327,8 @@ and rather directed towards tests than users. So, do not export."
                (declare (ignorable str vec arr list ht ht-eq ht-equalp
                                    assoc-list plist clos-object struct))
                ,@body))
-       (setf (find-class 'foo) nil)
-       (setf (find-class 'bar) nil)
+       (setf (find-class 'foo nil) nil)
+       (setf (find-class 'bar nil) nil)
        ,body-value)))
 
 (5am:def-test get-val (:depends-on (and array hash-table))
@@ -410,12 +409,12 @@ and rather directed towards tests than users. So, do not export."
 
 (5am:def-test set ()
   (with-reader-syntax (set)
-    (let ((hash-set (er "#{'a 'b 1}")))
-      (is-true  (typep hash-set 'hash-set:hash-set))
-      (is-true  (hash-set:hs-memberp hash-set 'a))
-      (is-true  (hash-set:hs-memberp hash-set 'b))
-      (is-true  (hash-set:hs-memberp hash-set 1))
-      (is-false (hash-set:hs-memberp hash-set 2)))))
+    (let ((set (er "#{'a 'b 1}")))
+      (is-true  (alexandria:setp set))
+      (is-true  (member 'a set))
+      (is-true  (member 'b set))
+      (is-true  (member 1  set))
+      (is-false (member 2  set)))))
 
 (5am:def-test run-program ()
   (with-reader-syntax (run-program)-

@@ -1,13 +1,12 @@
 (asdf:defsystem "reader"
   :serial t
   :license "MIT"
-  :version "0.10.0" ;; beta
+  :version "0.11.0" ;; beta
   :author "Shubhamkar Ayare (shubhamayare@yahoo.co.in)"
   :description "A utility library intended at providing configurable reader macros for
 common tasks such as accessors, hash-tables, sets, uiop:run-program, arrays and a few others."
   :depends-on ("alexandria"
                "fiveam"
-               "hash-set"
                "iterate"
                "split-sequence"
                "trivial-types"
