@@ -29,10 +29,14 @@ CL-USER> #[[1 2 3
 CL-USER> (gethash 'a {eq 'a 1 'b 2})            ; hash-tables
 1
 T
-CL-USER> (let ((reader:*set-function* 'hash-set:list-to-hs)) ; default is CL:REMOVE-DUPLICATES
+CL-USER> (let ((reader:*set-function* 'hash-set:list-to-hs))
            (hash-set:hs-memberp (eval (read-from-string "#{\"a\" \"b\" \"c\"}"))
-           "c"))
+                                "c"))
 T
+CL-USER> #{'(1) '(1)} ; default is CL:REMOVE-DUPLICATES
+((1) (1))
+CL-USER> #{'(1) '(1) :test #'equal}
+((1))
 CL-USER> [#2A((1 2 3) (4 5 6)) 1 0]             ; accessors
 4
 CL-USER> (setf reader:*get-val-array-function* 'select:select)

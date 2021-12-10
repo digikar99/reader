@@ -386,10 +386,28 @@ and rather directed towards tests than users. So, do not export."
 
 (defun set-reader-macro (stream char n)
   (declare (ignore char n))
-  `(,*set-function* (list ,@(iter (until (char= (peek-char t stream nil)
-                                                #\}))
-                              (collect (read stream))
-                              (finally (read-char stream nil))))))
+  (let* ((items (iter (until (char= (peek-char t stream nil)
+                                    #\}))
+                  (collect (read stream))
+                  (finally (read-char stream nil))))
+         (num-items (length items)))
+    (cond ((< num-items 2)
+           `(,*set-function* (list ,@items)))
+          ((eq :test (car (last items 2)))
+           `(,*set-function* (list ,@(butlast items 2))
+                             ,@(last items 2)))
+          (t
+           `(,*set-function* (list ,@items))))))
+
+(5am:def-test set ()
+  (with-reader-syntax (set)
+    (let ((set (er "#{'a 'b 1 '(1) '(1) :test #'equal}")))
+      (is-true  (alexandria:setp set))
+      (is-true  (member 'a set))
+      (is-true  (member 'b set))
+      (is-true  (member 1  set))
+      (is-false (member 2  set))
+      (is (= 1 (count '(1) set :test #'equal))))))
 
 (defun run-program-reader-macro (stream char n)
   (declare (ignore char n))
@@ -406,15 +424,6 @@ and rather directed towards tests than users. So, do not export."
 (defun describe-reader-macro (stream char)
   (declare (ignore char))
   `(describe (quote ,(read stream))))
-
-(5am:def-test set ()
-  (with-reader-syntax (set)
-    (let ((set (er "#{'a 'b 1}")))
-      (is-true  (alexandria:setp set))
-      (is-true  (member 'a set))
-      (is-true  (member 'b set))
-      (is-true  (member 1  set))
-      (is-false (member 2  set)))))
 
 (5am:def-test run-program ()
   (with-reader-syntax (run-program)-
