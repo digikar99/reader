@@ -7,10 +7,16 @@ Download from the [Releases section](https://github.com/digikar99/reader/release
 # Getting Started
 
 ```lisp
+;; Enable reader macros using the following:
 (reader:enable-reader-syntax &rest reader-macro-identifiers)
 ;; OR
 (reader+swank:enable-package-local-reader-syntax &rest reader-macro-identifiers)
-;; (describe 'reader:enable-reader-syntax) ; for a list of identifiers
+
+;; For instance, to enable reader macros for hash table and set:
+(reader:enable-reader-syntax 'hash-table 'set)
+
+;; The following gives you a list of identifiers:
+(describe 'reader:enable-reader-syntax)
 
 ;; Complementory macros
 ;; (reader:disable-reader-syntax) ; is complementary
@@ -49,7 +55,8 @@ CL-USER> [{"a" 1 "b" 2} "a"]
 T
 CL-USER> [(cl-json:decode-json-from-string "{\"a\":1, \"b\":2}") :b] ; works with alists
 2
-CL-USER> (-> {"a" "apple" "b" "ball"} ["b"] [1]); accessors can be chained using arrows:->
+CL-USER> (-> {"a" "apple" "b" "ball"} ["b"] [1]); accessors can be chained using ->, an arrow
+                                                ; see https://github.com/hipeta/arrow-macros/
 #\a
 CL-USER> #!echo -n hello world
 hello world                                     ; Captures until the end of line
